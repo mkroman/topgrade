@@ -1,4 +1,8 @@
 #![allow(clippy::cognitive_complexity)]
+
+#[macro_use]
+extern crate strum_macros;
+
 mod config;
 mod ctrlc;
 mod error;

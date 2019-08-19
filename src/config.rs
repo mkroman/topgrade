@@ -5,37 +5,17 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use shellexpand;
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::Display;
+use std::string::ToString;
 use std::{env, fs};
 use structopt::StructOpt;
 use toml;
 
 type Commands = BTreeMap<String, String>;
 
-lazy_static! {
-    // While this is used to automatically generate possible value list everywhere in the code, the
-    // README.md file still needs to be manually updated.
-    static ref STEPS_MAPPING: HashMap<&'static str, Step> = {
-        let mut m = HashMap::new();
-
-        m.insert("system", Step::System);
-        m.insert("git-repos", Step::GitRepos);
-        m.insert("vim", Step::Vim);
-        m.insert("emacs", Step::Emacs);
-        m.insert("gem", Step::Gem);
-        m.insert("sdkman", Step::Sdkman);
-        m.insert("remotes", Step::Remotes);
-        m.insert("rustup", Step::Rustup);
-        m.insert("cargo", Step::Cargo);
-
-        #[cfg(windows)]
-        m.insert("powershell", Step::Powershell);
-
-        m
-    };
-}
-
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, EnumVariantNames, EnumString)]
 #[serde(rename_all = "lowercase")]
+#[strum(case_style = "lowercase")]
 pub enum Step {
     /// Don't perform system upgrade
     System,
@@ -57,19 +37,6 @@ pub enum Step {
     Cargo,
     /// Don't update Powershell modules
     Powershell,
-}
-
-impl Step {
-    fn possible_values() -> Vec<&'static str> {
-        STEPS_MAPPING.keys().cloned().collect()
-    }
-}
-
-impl std::str::FromStr for Step {
-    type Err = structopt::clap::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(STEPS_MAPPING.get(s).unwrap().clone())
-    }
 }
 
 #[derive(Deserialize, Default)]
@@ -126,7 +93,7 @@ pub struct CommandLineArgs {
     no_retry: bool,
 
     /// Do not perform upgrades for the given steps
-    #[structopt(long = "disable", raw(possible_values = "&Step::possible_values()"))]
+    #[structopt(long = "disable", raw(possible_values = "&Step::()"))]
     disable: Vec<Step>,
 
     /// Output logs
